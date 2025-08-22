@@ -1,0 +1,49 @@
+# ===== .NET build artifacts =====
+bin/
+obj/
+.vs/
+
+# JetBrains Rider / IDE
+.idea/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+logs/
+LogFiles/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# ===== Secrets & keys (never commit) =====
+.env
+.env.*
+*.pfx
+*.p12
+*.pem
+*.key
+*.snk
+
+# Local settings that may contain secrets
+appsettings.Development.json
+appsettings.*.Development.json
+appsettings.*.Local.json
+local.settings.json
+secrets.json
+google-credentials.json
+service-account.json
+credentials.json
+
+# Node (if you add a frontend)
+node_modules/
+
+# Databases / caches
+*.db
+*.sqlite
+*.sqlite3
