@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Microsoft.AspNetCore.Authorization;
+
+
 
 
 namespace TimeTrackerAPI.Controllers
@@ -14,6 +17,18 @@ namespace TimeTrackerAPI.Controllers
     public class ProjectTimeController : BaseController
     {
         private readonly IProjectTimeService _service;
+        private static ProjectTimeDto ToDto(ProjectTime e) => new()
+        {
+            Id = e.Id,
+            UserId = e.UserId,
+            ProjectId = e.ProjectId,
+            // mark as UTC so JSON gets a trailing Z
+            StartTime = new DateTimeOffset(
+        DateTime.SpecifyKind(e.StartTime, DateTimeKind.Utc)),
+            EndTime = e.EndTime.HasValue
+        ? new DateTimeOffset(DateTime.SpecifyKind(e.EndTime.Value, DateTimeKind.Utc))
+        : null
+        };
 
         public ProjectTimeController(IProjectTimeService service)
         {
@@ -23,15 +38,14 @@ namespace TimeTrackerAPI.Controllers
         [HttpGet]
         public IActionResult GetProjectTimes()
         {
-            return Ok(_service.GetProjectTimes());
+            return Ok(_service.GetProjectTimes().Select(ToDto));
         }
 
         [HttpGet("user-project/{projectId}")]
         public IActionResult GetProjectsByUserAndProjectId(int projectId)
         {
             var userId = GetUserIdFromClaims();
-            Console.WriteLine("Getting projet times with params: ", projectId, userId);
-            return Ok(_service.GetByUserAndProjectId(userId, projectId));
+            return Ok(_service.GetByUserAndProjectId(userId, projectId).Select(ToDto));
         }
 
         [HttpGet("{projectTimeId}")]
@@ -42,7 +56,7 @@ namespace TimeTrackerAPI.Controllers
             {
                 return NotFound();
             }
-            return Ok(projectTime);
+            return Ok(ToDto(projectTime));
         }
 
         [HttpPost]
@@ -50,17 +64,17 @@ namespace TimeTrackerAPI.Controllers
         {
             var userId = GetUserIdFromClaims();
             var projectTime = _service.Create(userId, dto.ProjectId);
-            return CreatedAtAction(nameof(GetProjectTimeById), new { projectTimeId = projectTime.Id }, projectTime);
+            return CreatedAtAction(nameof(GetProjectTimeById), new { projectTimeId = projectTime.Id }, ToDto(projectTime));
         }
 
         [HttpPut("{projectTimeId}")]
         public IActionResult UpdateProjectTime(int projectTimeId, UpdateProjectTimeDto dto)
         {
             var userId = GetUserIdFromClaims();
+            var startTimeUtc = dto.StartTime.UtcDateTime;
             var endTime = DateTime.UtcNow;
-            var projectTime = _service.Update(projectTimeId, userId, dto.StartTime, endTime);
-            Console.WriteLine("Updated projectTime: ", projectTime.StartTime, projectTime.EndTime);
-            return Ok(projectTime);
+            var projectTime = _service.Update(projectTimeId, userId, startTimeUtc, endTime);
+            return Ok(ToDto(projectTime));
         }
 
         [HttpDelete("{projectTimeId}")]

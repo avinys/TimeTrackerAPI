@@ -4,6 +4,7 @@ using TimeTrackerAPI.DTOs;
 using TimeTrackerAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace TimeTrackerAPI.Controllers

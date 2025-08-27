@@ -1,30 +1,51 @@
-﻿using TimeTrackerAPI.Data;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
+using TimeTrackerAPI.Data;
 using TimeTrackerAPI.Middlewares;
-using TimeTrackerAPI.Services.Interfaces;
-using TimeTrackerAPI.Services;
-using TimeTrackerAPI.Repositories.Interfaces;
 using TimeTrackerAPI.Repositories;
+using TimeTrackerAPI.Repositories.Interfaces;
+using TimeTrackerAPI.Services;
+using TimeTrackerAPI.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+// Controllers
+builder.Services.AddControllers(options =>
+{
+    var policy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+    options.Filters.Add(new AuthorizeFilter(policy));
+});
 
+// EF Core
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+var cs = builder.Configuration.GetConnectionString("DefaultConnection");
+    //var serverVersion = new MySqlServerVersion(new Version(8, 0, 36));
+    options.UseMySql(
+        cs,
+        ServerVersion.AutoDetect(cs),
+        //serverVersion,
+        b => b.EnableRetryOnFailure()
+    );
+});
 
+// DI
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IProjectTimeService, ProjectTimeService>();
-
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<IProjectTimeRepository, ProjectTimeRepository>();
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Auth
 builder.Services.AddJwtCookieAuth(builder.Configuration);
+builder.Services.AddAuthorization();
+
+// CORS (credentials allowed for cookie auth)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -37,15 +58,29 @@ builder.Services.AddCors(options =>
     });
 });
 
-
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI();
-app.UseCors("AllowFrontend");
+// Apply EF Core migrations at startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    try
+    {
+        db.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Database migration failed");
+    }
+}
 
 app.UseHttpsRedirection();
 
+// CORS must run before auth/authorization when using credentials
+app.UseCors("AllowFrontend");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

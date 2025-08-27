@@ -3,6 +3,7 @@ using TimeTrackerAPI.Data;
 using TimeTrackerAPI.Models;
 using TimeTrackerAPI.DTOs;
 using TimeTrackerAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TimeTrackerAPI.Controllers
 {

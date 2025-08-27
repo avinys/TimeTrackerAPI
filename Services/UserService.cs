@@ -59,7 +59,7 @@ namespace TimeTrackerAPI.Services
                 ? _repo.GetByEmail(identifier)
                 : _repo.GetByUsername(identifier);
 
-            if (user == null || BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
                 return null;
             }

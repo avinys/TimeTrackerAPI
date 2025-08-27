@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TimeTrackerAPI.DTOs;
-using TimeTrackerAPI.Services.Interfaces;
 using TimeTrackerAPI.Services;
-using System.Security.Claims;
+using TimeTrackerAPI.Services.Interfaces;
 
 namespace TimeTrackerAPI.Controllers
 {
@@ -36,9 +37,9 @@ namespace TimeTrackerAPI.Controllers
         }
 
         [HttpPost("register")]
+        [AllowAnonymous]
         public IActionResult Register(CreateUserDto createUserDto)
-        {
-            Console.WriteLine("Received the request to register: " + createUserDto);
+        { 
             try
             {
                 var user = _userService.CreateUser(
@@ -55,9 +56,11 @@ namespace TimeTrackerAPI.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public IActionResult Login(LoginDto loginDto)
         {
             var user = _userService.ValidateLogin(loginDto.Identifier, loginDto.Password);
+        
             if(user == null)
             {
                 return Unauthorized();
@@ -77,10 +80,19 @@ namespace TimeTrackerAPI.Controllers
         }
 
         [HttpPost("logout")]
+        [Authorize]
         public IActionResult Logout()
         {
-            Response.Cookies.Delete("token");
+            Response.Cookies.Delete("token", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Path = "/", 
+            });
+
             return Ok(new { message = "Logged out successfully" });
         }
+
     }
 }
