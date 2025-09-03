@@ -1,13 +1,16 @@
 ﻿using TimeTrackerAPI.Models;
+using TimeTrackerAPI.DTOs;
 
 namespace TimeTrackerAPI.Services.Interfaces
 {
     public interface IProjectService
     {
-        IEnumerable<Project> GetProjects();
-        IEnumerable<Project> GetByUserId(int userId);
-        Project? GetById(int id);
-        Project Create(string name, int userId);
+        Task<IEnumerable<ProjectDto>> GetProjectsAsync();
+        Task<ProjectDto?> GetByIdAsync(int id);
+        Task<IEnumerable<ProjectDto>> GetByUserIdAsync(int userId);
+        Task<ProjectDto> CreateAsync(string name, int userId);
+        Task<ProjectDto> UpdateAsync(int projectId, string name);
+        Task DeleteAsync(int id);
     }
 }
 

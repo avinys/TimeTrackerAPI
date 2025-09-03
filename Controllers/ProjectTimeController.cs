@@ -6,14 +6,13 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Microsoft.AspNetCore.Authorization;
-
-
-
+using System.Threading.Tasks;
 
 namespace TimeTrackerAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Authorize]
+    [Route("api/project-times")]
     public class ProjectTimeController : BaseController
     {
         private readonly IProjectTimeService _service;
@@ -22,12 +21,11 @@ namespace TimeTrackerAPI.Controllers
             Id = e.Id,
             UserId = e.UserId,
             ProjectId = e.ProjectId,
-            // mark as UTC so JSON gets a trailing Z
-            StartTime = new DateTimeOffset(
-        DateTime.SpecifyKind(e.StartTime, DateTimeKind.Utc)),
+            StartTime = new DateTimeOffset(e.StartTime, TimeSpan.Zero), // treat as UTC
             EndTime = e.EndTime.HasValue
-        ? new DateTimeOffset(DateTime.SpecifyKind(e.EndTime.Value, DateTimeKind.Utc))
-        : null
+                ? new DateTimeOffset(e.EndTime.Value, TimeSpan.Zero)
+                : (DateTimeOffset?)null,
+            Comment = e.Comment
         };
 
         public ProjectTimeController(IProjectTimeService service)
@@ -35,53 +33,69 @@ namespace TimeTrackerAPI.Controllers
             _service = service;
         }
 
+        // GET: api/project-times
         [HttpGet]
-        public IActionResult GetProjectTimes()
+        public async Task<IActionResult> GetProjectTimes()
         {
-            return Ok(_service.GetProjectTimes().Select(ToDto));
+            var projectTimes = await _service.GetProjectTimesAsync();
+            return Ok(projectTimes.Select(ToDto));
         }
 
-        [HttpGet("user-project/{projectId}")]
-        public IActionResult GetProjectsByUserAndProjectId(int projectId)
+        // GET: api/project-times/user-project/{projectId}?userId=123
+        // - Regular users: ignores/forbids mismatched userId
+        // - Admins: can pass any userId to fetch that user's entries
+        [HttpGet("user-project/{projectId:int}")]
+        public async Task<IActionResult> GetByUserAndProject(int projectId, [FromQuery] int? userId)
         {
-            var userId = GetUserIdFromClaims();
-            return Ok(_service.GetByUserAndProjectId(userId, projectId).Select(ToDto));
+            var effectiveUserId = userId ?? GetUserIdFromClaims();
+            var projectTimes = await _service.GetByUserAndProjectIdAsync(effectiveUserId,  projectId);
+            return Ok(projectTimes.Select(ToDto));
         }
 
-        [HttpGet("{projectTimeId}")]
-        public IActionResult GetProjectTimeById(int projectTimeId)
+        // GET: api/project-times/{projectTimeId}
+        [HttpGet("{projectTimeId:int}")]
+        public async Task<IActionResult> GetProjectTimeById(int projectTimeId)
         {
-            var projectTime = _service.GetById(projectTimeId);
-            if (projectTime == null)
-            {
-                return NotFound();
-            }
-            return Ok(ToDto(projectTime));
+            var projectTime = await _service.GetByIdAsync(projectTimeId);
+            return projectTime is null ? NotFound("Project time was not found") : Ok(ToDto(projectTime));
         }
 
+        // POST: api/project-times
         [HttpPost]
-        public IActionResult CreateProjectTime(CreateProjectTimeDto dto)
+        public async Task<IActionResult> CreateProjectTime([FromBody] CreateProjectTimeDto dto)
         {
-            var userId = GetUserIdFromClaims();
-            var projectTime = _service.Create(userId, dto.ProjectId);
-            return CreatedAtAction(nameof(GetProjectTimeById), new { projectTimeId = projectTime.Id }, ToDto(projectTime));
+            var userId = dto.UserId ?? GetUserIdFromClaims();
+            var projectTime = await _service.CreateAsync(userId, dto.ProjectId);
+            return CreatedAtAction(nameof(GetProjectTimeById), 
+                new { projectTimeId = projectTime.Id }, 
+                ToDto(projectTime));
         }
 
-        [HttpPut("{projectTimeId}")]
-        public IActionResult UpdateProjectTime(int projectTimeId, UpdateProjectTimeDto dto)
+        // PUT: api/project-times/{projectTimeId}
+        [HttpPut("{projectTimeId:int}")]
+        public async Task<IActionResult> UpdateProjectTime(int projectTimeId, UpdateProjectTimeDto dto)
         {
-            var userId = GetUserIdFromClaims();
-            var startTimeUtc = dto.StartTime.UtcDateTime;
-            var endTime = DateTime.UtcNow;
-            var projectTime = _service.Update(projectTimeId, userId, startTimeUtc, endTime);
+            var startUtc = dto.StartTime?.UtcDateTime;
+            var endUtc = dto.EndTime?.UtcDateTime;
+            var comment = dto.Comment ?? string.Empty;
+            var projectTime = await _service.UpdateAsync(projectTimeId, startUtc, endUtc, comment);
             return Ok(ToDto(projectTime));
         }
 
-        [HttpDelete("{projectTimeId}")]
-        public IActionResult DeleteProjectTimeById(int projectTimeId)
+        // PUT: api/project-times/stop/{projectTimeId}
+        [HttpPut("stop/{projectTimeId:int}")]
+        public async Task<IActionResult> StopProjectTime(int projectTimeId)
         {
-            var userId = GetUserIdFromClaims();
-            _service.Delete(projectTimeId, userId);
+            var endUtc = DateTimeOffset.UtcNow;
+            var projectTime = await _service.UpdateAsync(projectTimeId, null, endUtc, null);
+            return Ok(ToDto(projectTime));
+        }
+
+        // DELETE: api/project-times/{projectTimeId}
+        [HttpDelete("{projectTimeId:int}")]
+        public async Task<IActionResult> DeleteProjectTimeById(int projectTimeId)
+        {
+            await _service.DeleteAsync(projectTimeId);
             return NoContent();
         }
     }

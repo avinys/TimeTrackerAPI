@@ -1,4 +1,5 @@
-﻿using TimeTrackerAPI.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using TimeTrackerAPI.Data;
 using TimeTrackerAPI.Models;
 using TimeTrackerAPI.Repositories.Interfaces;
 
@@ -11,25 +12,25 @@ namespace TimeTrackerAPI.Repositories
         {
             _context = context;
         }
-        public IEnumerable<Project> GetProjects()
+        public IQueryable<Project> Query()
         {
-            return _context.Projects.ToList();
+            return _context.Projects;
         }
-        public IEnumerable<Project> GetByUserId(int userId)
+        public  Task<Project?> GetByIdAsync(int id)
         {
-            return _context.Projects.Where(p => p.UserId == userId);
+            return _context.Projects.FirstOrDefaultAsync(p => p.Id == id);
         }
-        public Project? GetById(int id)
+        public Task AddAsync(Project project)
         {
-            return _context.Projects.FirstOrDefault(p => p.Id == id);
+            return _context.Projects.AddAsync(project).AsTask();
         }
-        public void Add(Project project)
+        public void Remove(Project project)
         {
-            _context.Projects.Add(project);
+            _context.Projects.Remove(project);
         }
-        public void Save()
+        public Task SaveAsync()
         {
-            _context.SaveChanges();
+            return _context.SaveChangesAsync();
         }
     }
 }
