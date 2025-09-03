@@ -8,5 +8,7 @@
 
         public int UserId { get; set; }
         public User User { get; set; }
+        public int Correction { get; set; }
+        public ICollection<ProjectTime> ProjectTimes { get; set; } = new List<ProjectTime>();
     }
 }

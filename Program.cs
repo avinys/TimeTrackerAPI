@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using TimeTrackerAPI.Data;
@@ -33,6 +34,8 @@ var cs = builder.Configuration.GetConnectionString("DefaultConnection");
 });
 
 // DI
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
@@ -40,6 +43,11 @@ builder.Services.AddScoped<IProjectTimeService, ProjectTimeService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<IProjectTimeRepository, ProjectTimeRepository>();
+builder.Services.AddTransient<ApiExceptionMiddleware>();
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/var/aspnet-dp-keys"))
+    .SetApplicationName("TimeTrackerAPI"); // same name across instances
+
 
 // Auth
 builder.Services.AddJwtCookieAuth(builder.Configuration);
@@ -76,6 +84,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseHttpsRedirection();
+app.UseMiddleware<ApiExceptionMiddleware>();
 
 // CORS must run before auth/authorization when using credentials
 app.UseCors("AllowFrontend");

@@ -4,10 +4,10 @@ namespace TimeTrackerAPI.Repositories.Interfaces
 {
     public interface IProjectRepository
     {
-        IEnumerable<Project> GetProjects();
-        IEnumerable<Project> GetByUserId(int userId);
-        Project? GetById(int id);
-        void Add(Project project);
-        void Save();
+        IQueryable<Project> Query();
+        Task<Project?> GetByIdAsync(int id);
+        Task AddAsync(Project project);
+        void Remove(Project project);
+        Task SaveAsync();
     }
 }

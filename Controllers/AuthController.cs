@@ -8,7 +8,7 @@ using TimeTrackerAPI.Services.Interfaces;
 namespace TimeTrackerAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     public class AuthController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -20,6 +20,7 @@ namespace TimeTrackerAPI.Controllers
             _jwtService = jwtService;
         }
 
+        // GET: api/auth/me
         [HttpGet("me")]
         public IActionResult Me()
         {
@@ -36,6 +37,7 @@ namespace TimeTrackerAPI.Controllers
             return Ok(new { id, username, email, role });
         }
 
+        // POST: api/auth/register
         [HttpPost("register")]
         [AllowAnonymous]
         public IActionResult Register(CreateUserDto createUserDto)
@@ -55,6 +57,7 @@ namespace TimeTrackerAPI.Controllers
             }
         }
 
+        // POST: api/auth/login
         [HttpPost("login")]
         [AllowAnonymous]
         public IActionResult Login(LoginDto loginDto)

@@ -1,14 +1,18 @@
-﻿using TimeTrackerAPI.Models;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using TimeTrackerAPI.Models;
 
 namespace TimeTrackerAPI.Services.Interfaces
 {
     public interface IProjectTimeService
     {
-        public IEnumerable<ProjectTime> GetProjectTimes();
-        public ProjectTime? GetById(int id);
-        public IEnumerable<ProjectTime> GetByUserAndProjectId(int userId, int projectId);
-        public ProjectTime Create(int userId, int projectId);
-        public ProjectTime Update(int projectTimeId, int userId, DateTime startTime, DateTime endTime);
-        public void Delete(int id, int userId);
+        Task<IEnumerable<ProjectTime>> GetProjectTimesAsync();
+        Task<ProjectTime?> GetByIdAsync(int id);
+        Task<IEnumerable<ProjectTime>> GetByUserAndProjectIdAsync(int userId, int projectId);
+        Task<ProjectTime> CreateAsync(int userId, int projectId);
+        Task<ProjectTime> UpdateAsync(int projectTimeId, DateTimeOffset? startUtc, DateTimeOffset? endUtc, string? comment);
+        Task DeleteAsync(int id);
     }
 }

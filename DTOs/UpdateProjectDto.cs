@@ -2,11 +2,10 @@
 
 namespace TimeTrackerAPI.DTOs
 {
-    public class CreateProjectDto
+    public class UpdateProjectDto
     {
         [Required]
         [StringLength(100)]
         public string Name { get; set; }
-        public int? UserId { get; set; }
     }
 }

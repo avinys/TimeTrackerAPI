@@ -1,4 +1,5 @@
-﻿using TimeTrackerAPI.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using TimeTrackerAPI.Data;
 using TimeTrackerAPI.Models;
 using TimeTrackerAPI.Repositories.Interfaces;
 
@@ -11,49 +12,30 @@ namespace TimeTrackerAPI.Repositories
         {
             _context = context;
         }
-        public IEnumerable<ProjectTime> GetProjectTimes()
+
+        public IQueryable<ProjectTime> Query() 
         {
-            return _context.ProjectTimes.ToList();
+           return _context.ProjectTimes;
         }
 
-        public ProjectTime? GetById(int id)
+        public Task<ProjectTime?> GetByIdAsync(int id)
         {
-            return _context.ProjectTimes.FirstOrDefault(t => t.Id == id);
+            return _context.ProjectTimes.FirstOrDefaultAsync(pt => pt.Id == id);
         }
 
-        public IEnumerable<ProjectTime> GetByUserAndProjectId(int userId, int projectId)
+        public Task AddAsync(ProjectTime projectTime)
         {
-            return _context.ProjectTimes.Where(t => t.UserId == userId && t.ProjectId == projectId);
+            return _context.ProjectTimes.AddAsync(projectTime).AsTask();
         }
 
-        public void Add(ProjectTime projectTime)
+        public void Remove(ProjectTime projectTime)
         {
-            _context.ProjectTimes.Add(projectTime);
-        }
-        
-        public void Update(ProjectTime projectTime)
-        {
-            var existingProjectTime = _context.ProjectTimes.FirstOrDefault(p => p.Id == projectTime.Id);
-            if (existingProjectTime != null)
-            {
-                existingProjectTime.StartTime = projectTime.StartTime;
-                existingProjectTime.EndTime = projectTime.EndTime;
-            }
-
+            _context.ProjectTimes.Remove(projectTime);
         }
 
-        public void Delete(int id)
+        public Task SaveAsync()
         {
-            var projectTime = GetById(id);
-            if (projectTime != null)
-            {
-                _context.ProjectTimes.Remove(projectTime);
-            }
-        }
-
-        public void Save()
-        {
-            _context.SaveChanges();
+            return _context.SaveChangesAsync();
         }
     }
 }

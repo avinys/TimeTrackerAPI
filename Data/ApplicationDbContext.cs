@@ -12,5 +12,23 @@ namespace TimeTrackerAPI.Data
         public DbSet<Project> Projects { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<ProjectTime> ProjectTimes { get; set; }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Project (1) -> (many) ProjectTimes with cascade delete
+            modelBuilder.Entity<ProjectTime>()
+                .HasOne(pt => pt.Project)
+                .WithMany(p => p.ProjectTimes)
+                .HasForeignKey(pt => pt.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectTime>()
+                .HasIndex(pt => new { pt.UserId, pt.ProjectId, pt.EndTime });
+
+            // Index for “latest entry per project” queries
+            modelBuilder.Entity<ProjectTime>()
+                .HasIndex(pt => new { pt.UserId, pt.ProjectId, pt.StartTime });
+        }
     }
 }
