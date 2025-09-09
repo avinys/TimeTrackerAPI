@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TimeTrackerAPI.DTOs;
-using TimeTrackerAPI.Services;
 using TimeTrackerAPI.Services.Interfaces;
 using Google.Apis.Auth;
 
@@ -24,35 +23,28 @@ namespace TimeTrackerAPI.Controllers
             _configuration = configuration;
         }
 
-        // GET: api/auth/me
         [HttpGet("me")]
         public IActionResult Me()
         {
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
-            if (identity == null || !identity.IsAuthenticated)
-                return Unauthorized();
+            var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(id)) return Unauthorized();
 
-            var id = identity.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var username = identity.FindFirst(ClaimTypes.Name)?.Value;
-            var email = identity.FindFirst(ClaimTypes.Email)?.Value;
-            var role = identity.FindFirst(ClaimTypes.Role)?.Value;
-
-
-            return Ok(new { id, username, email, role });
+            return Ok(new
+            {
+                id,
+                username = User.FindFirstValue(ClaimTypes.Name),
+                email = User.FindFirstValue(ClaimTypes.Email),
+                role = User.FindFirstValue(ClaimTypes.Role)
+            });
         }
 
-        // POST: api/auth/register
         [HttpPost("register")]
         [AllowAnonymous]
-        public IActionResult Register(CreateUserDto createUserDto)
-        { 
+        public async Task<IActionResult> Register(CreateUserDto dto)
+        {
             try
             {
-                var user = _userService.CreateUser(
-                    createUserDto.Username, 
-                    createUserDto.Email, 
-                    createUserDto.Password
-                );
+                var user = await _userService.CreateUserAsync(dto.Username, dto.Email, dto.Password);
                 return Ok(new { user.Id, user.Username, user.Email });
             }
             catch (Exception ex)
@@ -61,17 +53,12 @@ namespace TimeTrackerAPI.Controllers
             }
         }
 
-        // POST: api/auth/login
         [HttpPost("login")]
         [AllowAnonymous]
-        public IActionResult Login(LoginDto loginDto)
+        public async Task<IActionResult> Login(LoginDto dto)
         {
-            var user = _userService.ValidateLogin(loginDto.Identifier, loginDto.Password);
-        
-            if(user == null)
-            {
-                return Unauthorized();
-            }
+            var user = await _userService.ValidateLoginAsync(dto.Identifier, dto.Password);
+            if (user == null) return Unauthorized();
 
             var token = _jwtService.GenerateToken(user);
 
@@ -92,39 +79,33 @@ namespace TimeTrackerAPI.Controllers
         public async Task<IActionResult> Google([FromBody] GoogleLoginDto googleDto)
         {
             if (string.IsNullOrWhiteSpace(googleDto.IdToken))
-            {
                 return BadRequest(new { message = "Missing idToken" });
-            }
 
             var clientId = _configuration["Authentication:Google:ClientId"];
-            if(string.IsNullOrWhiteSpace(clientId))
-            {
-                return StatusCode(500, new { message = "Google Clientid not configured" });
-            }
+            if (string.IsNullOrWhiteSpace(clientId))
+                return StatusCode(500, new { message = "Google ClientId not configured" });
 
             GoogleJsonWebSignature.Payload payload;
             try
             {
-                payload = await GoogleJsonWebSignature.ValidateAsync(googleDto.IdToken, new GoogleJsonWebSignature.ValidationSettings
-                {
-                    Audience = new[] { clientId }
-                });
-            } catch
+                payload = await GoogleJsonWebSignature.ValidateAsync(
+                    googleDto.IdToken,
+                    new GoogleJsonWebSignature.ValidationSettings { Audience = new[] { clientId } });
+            }
+            catch
             {
                 return Unauthorized(new { message = "Invalid Google token" });
             }
 
-            if(payload.EmailVerified != true)
-            {
+            if (payload.EmailVerified != true)
                 return Unauthorized(new { message = "Unverified google email" });
-            }
 
-            var user = _userService.CreateOrLinkExternalUser(
-                provider: "google",
+            var user = await _userService.CreateOrLinkExternalUserAsync(
+                provider: "google",               // <-- fix typo
                 providerUserId: payload.Subject,
                 email: payload.Email,
                 fullName: payload.Name
-                );
+            );
 
             var token = _jwtService.GenerateToken(user);
 
@@ -149,11 +130,9 @@ namespace TimeTrackerAPI.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Path = "/", 
+                Path = "/",
             });
-
             return Ok(new { message = "Logged out successfully" });
         }
-
     }
 }

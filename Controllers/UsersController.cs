@@ -1,9 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TimeTrackerAPI.Data;
-using TimeTrackerAPI.Models;
 using TimeTrackerAPI.DTOs;
 using TimeTrackerAPI.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 
 namespace TimeTrackerAPI.Controllers
 {
@@ -12,29 +9,27 @@ namespace TimeTrackerAPI.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _service;
-
-        public UsersController(IUserService service)
-        {
-            _service = service;
-        }
+        public UsersController(IUserService service) => _service = service;
 
         [HttpGet]
-        public IActionResult GetUsers()
+        public async Task<IActionResult> GetUsers()
         {
-            return Ok(_service.GetUsers());
+            var users = await _service.GetUsersAsync();
+            return Ok(users);
         }
 
-        [HttpGet("{id}")]
-        public IActionResult GetUserById(int id)
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetUserById(int id)
         {
-            return Ok(_service.GetById(id));
+            var user = await _service.GetByIdAsync(id);
+            return user is null ? NotFound() : Ok(user);
         }
 
         [HttpPost]
-        public IActionResult CreateUser(CreateUserDto dto)
+        public async Task<IActionResult> CreateUser(CreateUserDto dto)
         {
-            var user = _service.CreateUser(dto.Username, dto.Email, dto.Password);
-            return CreatedAtAction(nameof(GetUsers), new { id = user.Id }, user);
+            var user = await _service.CreateUserAsync(dto.Username, dto.Email, dto.Password);
+            return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, user);
         }
     }
 }

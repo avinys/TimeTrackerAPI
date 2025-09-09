@@ -5,12 +5,12 @@ namespace TimeTrackerAPI.Services.Interfaces
 {
     public interface IUserService
     {
-        IEnumerable<User> GetUsers();
-        User? GetById(int id);
-        User? GetByUsername(string username); // Is really needed??
-        User? GetByEmail(string email); // Is really needed??
-        User? ValidateLogin(string identifier, string password);
-        User CreateUser(string username, string email, string password);
-        User CreateOrLinkExternalUser(string provider, string providerUserId, string email, string? fullName);
+        Task<IEnumerable<User>> GetUsersAsync();
+        Task<User?> GetByIdAsync(int id);
+        Task<User?> GetByUsernameAsync(string username);
+        Task<User?> GetByEmailAsync(string email);
+        Task<User> CreateUserAsync(string username, string email, string password);
+        Task<User?> ValidateLoginAsync(string identifier, string password);
+        Task<User> CreateOrLinkExternalUserAsync(string provider, string providerUserId, string email, string? fullName);
     }
 }

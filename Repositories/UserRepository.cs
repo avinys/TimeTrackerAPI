@@ -8,48 +8,37 @@ namespace TimeTrackerAPI.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly ApplicationDbContext _context;
+        public UserRepository(ApplicationDbContext context) => _context = context;
 
-        public UserRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        public IQueryable<User> Query() => _context.Users.AsQueryable();
 
-        public IEnumerable<User> GetUsers()
-        {
-            return _context.Users.ToList();
-        }
-        public User? GetById(int id)
-        {
-            return _context.Users.FirstOrDefault(u => u.Id == id);
-        }
-        public User? GetByUsername(string username)
-        {
-            return _context.Users.FirstOrDefault(u => u.Username == username);
-        }
-        public User? GetByEmail(string email)
-        {
-            return _context.Users.FirstOrDefault(u => u.Email == email);
-        }
+        public Task<List<User>> GetUsersAsync() =>
+            _context.Users.AsNoTracking().ToListAsync();
 
-        public User? GetByProvider(string provider, string providerUserId)
+        public Task<User?> GetByIdAsync(int id) =>
+            _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+
+        public Task<User?> GetByUsernameAsync(string username) =>
+            _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+
+        public Task<User?> GetByEmailAsync(string email) =>
+            _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        public async Task<User?> GetByProviderAsync(string provider, string providerUserId)
         {
-            return _context.UserIdentityProviders
+            return await _context.UserIdentityProviders
                 .Include(x => x.User)
-                .FirstOrDefault(x => x.Provider == provider && x.ProviderUserId == providerUserId)
-                ?.User;
+                .Where(x => x.Provider == provider && x.ProviderUserId == providerUserId)
+                .Select(x => x.User)
+                .FirstOrDefaultAsync();
         }
 
-        public void AddProviderLink(UserIdentityProvider link)
-        {
-            _context.UserIdentityProviders.Add(link);
-        }
-        public void Add(User user)
-        {
-            _context.Users.Add(user);
-        }
-        public void Save()
-        {
-            _context.SaveChanges();
-        }
+        public Task AddAsync(User user) =>
+            _context.Users.AddAsync(user).AsTask();
+
+        public Task AddProviderLinkAsync(UserIdentityProvider link) =>
+            _context.UserIdentityProviders.AddAsync(link).AsTask();
+
+        public Task SaveAsync() => _context.SaveChangesAsync();
     }
 }
