@@ -15,9 +15,11 @@ namespace TimeTrackerAPI.Models
         [EmailAddress]
         [MaxLength(255)]
         public string Email { get; set; }
-        [Required]
-        public string PasswordHash { get; set; }
+        
+        public string? PasswordHash { get; set; }
 
         public ICollection<Project> Projects { get; set; } = new List<Project>();
+        public ICollection<UserIdentityProvider> ExternalLogins { get; set; } = new List<UserIdentityProvider>();
+
     }
 }

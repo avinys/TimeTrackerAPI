@@ -11,5 +11,6 @@ namespace TimeTrackerAPI.Services.Interfaces
         User? GetByEmail(string email); // Is really needed??
         User? ValidateLogin(string identifier, string password);
         User CreateUser(string username, string email, string password);
+        User CreateOrLinkExternalUser(string provider, string providerUserId, string email, string? fullName);
     }
 }

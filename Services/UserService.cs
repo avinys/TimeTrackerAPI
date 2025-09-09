@@ -40,6 +40,10 @@ namespace TimeTrackerAPI.Services
             {
                 throw new Exception("Email already exists");
             }
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                throw new Exception("Password is required");
+            }
 
             string hash = BCrypt.Net.BCrypt.HashPassword(password);
             var user = new User
@@ -59,12 +63,47 @@ namespace TimeTrackerAPI.Services
                 ? _repo.GetByEmail(identifier)
                 : _repo.GetByUsername(identifier);
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash) || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
                 return null;
             }
 
             return user;
+        }
+        public User CreateOrLinkExternalUser(string provider, string providerUserId, string email, string? fullName)
+        {
+            var byProvider = _repo.GetByProvider(provider, providerUserId);
+            if(byProvider != null)
+            {
+                return byProvider;
+            }
+
+            var user = GetByEmail(email);
+            if(user == null)
+            {
+                user = new User
+                {
+                    Username = email,
+                    Email = email,
+                    PasswordHash = null,
+                    Role = "User"
+                };
+                _repo.Add(user);
+                _repo.Save();
+            }
+
+            _repo.AddProviderLink(new UserIdentityProvider
+            {
+                UserId = user.Id,
+                Provider = provider,
+                ProviderUserId = providerUserId,
+                ProviderEmail = email
+
+            });
+
+            _repo.Save();
+            return user;
+
         }
     }
 }
