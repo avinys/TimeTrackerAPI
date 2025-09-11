@@ -35,8 +35,9 @@ namespace TimeTrackerAPI.Services
             var port = int.TryParse(_cfg["Email:Smtp:Port"], out var p) ? p : 587;
             var username = _cfg["Email:Smtp:Username"];
             var password = _cfg["Email:Smtp:Password"];
+            var socket = port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
 
-            await client.ConnectAsync("smtp.zoho.eu", 465, SecureSocketOptions.SslOnConnect);
+            await client.ConnectAsync(host, port, socket);
             client.AuthenticationMechanisms.Remove("XOAUTH2");
             if (!string.IsNullOrEmpty(username))
                 await client.AuthenticateAsync(username, password);
