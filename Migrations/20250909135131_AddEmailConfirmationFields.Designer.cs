@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TimeTrackerAPI.Data;
 
@@ -11,64 +12,18 @@ using TimeTrackerAPI.Data;
 namespace TimeTrackerAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250909135131_AddEmailConfirmationFields")]
+    partial class AddEmailConfirmationFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.20")
+                .HasAnnotation("ProductVersion", "8.0.19")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("TimeTrackerAPI.Models.PasswordResetToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("ConsumedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedIp")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("CreatedUserAgent")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<DateTime>("ExpiresAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Purpose")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("varchar(32)");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExpiresAtUtc");
-
-                    b.HasIndex("UserId", "TokenHash")
-                        .IsUnique();
-
-                    b.ToTable("PasswordResetTokens");
-                });
 
             modelBuilder.Entity("TimeTrackerAPI.Models.Project", b =>
                 {
@@ -226,17 +181,6 @@ namespace TimeTrackerAPI.Migrations
                     b.ToTable("UserIdentityProviders");
                 });
 
-            modelBuilder.Entity("TimeTrackerAPI.Models.PasswordResetToken", b =>
-                {
-                    b.HasOne("TimeTrackerAPI.Models.User", "User")
-                        .WithMany("PasswordResetTokens")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("TimeTrackerAPI.Models.Project", b =>
                 {
                     b.HasOne("TimeTrackerAPI.Models.User", "User")
@@ -278,8 +222,6 @@ namespace TimeTrackerAPI.Migrations
             modelBuilder.Entity("TimeTrackerAPI.Models.User", b =>
                 {
                     b.Navigation("ExternalLogins");
-
-                    b.Navigation("PasswordResetTokens");
 
                     b.Navigation("Projects");
                 });

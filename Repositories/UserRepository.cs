@@ -1,4 +1,5 @@
-﻿using TimeTrackerAPI.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using TimeTrackerAPI.Data;
 using TimeTrackerAPI.Models;
 using TimeTrackerAPI.Repositories.Interfaces;
 
@@ -7,35 +8,45 @@ namespace TimeTrackerAPI.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly ApplicationDbContext _context;
+        public UserRepository(ApplicationDbContext context) => _context = context;
 
-        public UserRepository(ApplicationDbContext context)
+        public IQueryable<User> Query() => _context.Users.AsQueryable();
+
+        public Task<List<User>> GetUsersAsync() =>
+            _context.Users.AsNoTracking().ToListAsync();
+
+        public Task<User?> GetByIdAsync(int id) =>
+            _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+
+        public Task<User?> GetByUsernameAsync(string username) =>
+            _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+
+        public Task<User?> GetByEmailAsync(string email) =>
+            _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        public async Task<User?> GetByProviderAsync(string provider, string providerUserId)
         {
-            _context = context;
+            return await _context.UserIdentityProviders
+                .Include(x => x.User)
+                .Where(x => x.Provider == provider && x.ProviderUserId == providerUserId)
+                .Select(x => x.User)
+                .FirstOrDefaultAsync();
         }
 
-        public IEnumerable<User> GetUsers()
+        public Task AddAsync(User user) =>
+            _context.Users.AddAsync(user).AsTask();
+
+        public Task AddProviderLinkAsync(UserIdentityProvider link) =>
+            _context.UserIdentityProviders.AddAsync(link).AsTask();
+
+        public void Update(User user)
         {
-            return _context.Users.ToList();
+            // If user is detached (common because many reads use AsNoTracking),
+            // attach and mark as modified.
+            _context.Attach(user);
+            _context.Entry(user).State = EntityState.Modified;
         }
-        public User? GetById(int id)
-        {
-            return _context.Users.FirstOrDefault(u => u.Id == id);
-        }
-        public User? GetByUsername(string username)
-        {
-            return _context.Users.FirstOrDefault(u => u.Username == username);
-        }
-        public User? GetByEmail(string email)
-        {
-            return _context.Users.FirstOrDefault(u => u.Email == email);
-        }
-        public void Add(User user)
-        {
-            _context.Users.Add(user);
-        }
-        public void Save()
-        {
-            _context.SaveChanges();
-        }
+
+        public Task SaveAsync() => _context.SaveChangesAsync();
     }
 }
