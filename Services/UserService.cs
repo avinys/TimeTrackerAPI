@@ -9,8 +9,14 @@ namespace TimeTrackerAPI.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _repo;
-        public UserService(IUserRepository repo) => _repo = repo;
+        private readonly ICurrentUserService _current;
 
+        public UserService(IUserRepository repo, ICurrentUserService current)
+        {
+            _repo = repo;
+            _current = current;
+        }
+        private int RequireUser() => _current.UserId ?? throw new UnauthorizedAccessException("User not authenticated.");
         public Task<IEnumerable<User>> GetUsersAsync() =>
             _repo.GetUsersAsync().ContinueWith(t => (IEnumerable<User>)t.Result);
 
@@ -84,6 +90,29 @@ namespace TimeTrackerAPI.Services
 
             return user;
         }
+
+        public async Task ChangePasswordAsync(string currentPassword, string newPassword)
+        {
+            var userId = RequireUser();
+
+            var user = await _repo.GetByIdAsync(userId) ?? throw new Exception("User not found.");
+            if (string.IsNullOrEmpty(user.PasswordHash))
+                throw new Exception("Password login is not configured for this account.");
+
+            // verify current password
+            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+                throw new Exception("Current password is incorrect.");
+
+            // avoid setting the same password
+            if (BCrypt.Net.BCrypt.Verify(newPassword, user.PasswordHash))
+                throw new Exception("New password must be different from the current password.");
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+
+            _repo.Update(user);
+            await _repo.SaveAsync();
+        }
+
         public async Task SaveAsync(User user)
         {
             _repo.Update(user);

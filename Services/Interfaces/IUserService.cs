@@ -11,6 +11,7 @@ namespace TimeTrackerAPI.Services.Interfaces
         Task<User> CreateUserAsync(string username, string email, string password);
         Task<User?> ValidateLoginAsync(string identifier, string password);
         Task<User> CreateOrLinkExternalUserAsync(string provider, string providerUserId, string email, string? fullName);
+        Task ChangePasswordAsync(string currentPassword, string newPassword);
         Task SaveAsync(User user);
     }
 }

@@ -6,7 +6,7 @@ using TimeTrackerAPI.Services.Interfaces;
 namespace TimeTrackerAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/me")]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _service;
@@ -33,6 +33,21 @@ namespace TimeTrackerAPI.Controllers
             return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, user);
         }
 
+        [HttpPost("password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword.Length < 8)
+                return BadRequest(new { message = "New password must be at least 8 characters." });
 
+            try
+            {
+                await _service.ChangePasswordAsync(dto.CurrentPassword, dto.NewPassword);
+                return Ok(new { message = "Password changed." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
