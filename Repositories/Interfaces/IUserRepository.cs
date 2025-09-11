@@ -12,6 +12,7 @@ namespace TimeTrackerAPI.Repositories.Interfaces
         Task<User?> GetByProviderAsync(string provider, string providerUserId);
         Task AddAsync(User user);
         Task AddProviderLinkAsync(UserIdentityProvider link);
+        void Update(User user);
         Task SaveAsync();
     }
 }

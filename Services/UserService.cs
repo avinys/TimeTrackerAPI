@@ -84,5 +84,10 @@ namespace TimeTrackerAPI.Services
 
             return user;
         }
+        public async Task SaveAsync(User user)
+        {
+            _repo.Update(user);
+            await _repo.SaveAsync();
+        }
     }
 }

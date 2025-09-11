@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using TimeTrackerAPI.Models;
+﻿using TimeTrackerAPI.Models;
 
 namespace TimeTrackerAPI.Services.Interfaces
 {
@@ -12,5 +11,6 @@ namespace TimeTrackerAPI.Services.Interfaces
         Task<User> CreateUserAsync(string username, string email, string password);
         Task<User?> ValidateLoginAsync(string identifier, string password);
         Task<User> CreateOrLinkExternalUserAsync(string provider, string providerUserId, string email, string? fullName);
+        Task SaveAsync(User user);
     }
 }

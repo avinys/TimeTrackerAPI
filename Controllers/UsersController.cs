@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TimeTrackerAPI.DTOs;
 using TimeTrackerAPI.Services.Interfaces;
 
@@ -31,5 +32,7 @@ namespace TimeTrackerAPI.Controllers
             var user = await _service.CreateUserAsync(dto.Username, dto.Email, dto.Password);
             return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, user);
         }
+
+
     }
 }

@@ -21,5 +21,17 @@ namespace TimeTrackerAPI.Models
         public ICollection<Project> Projects { get; set; } = new List<Project>();
         public ICollection<UserIdentityProvider> ExternalLogins { get; set; } = new List<UserIdentityProvider>();
 
+        // Email confirmation
+        public bool EmailConfirmed { get; set; } = false;
+        public string? EmailConfirmationTokenHash { get; set; }
+        public DateTime? EmailConfirmationExpiresAt { get; set; }
+
+        // Resend limiting
+        public DateTime? EmailConfirmationLastSentAt { get; set; }
+        public DateTime? EmailConfirmationResendCountWindowStart { get; set; }
+        public int EmailConfirmationResendCount { get; set; }
+
+        public ICollection<PasswordResetToken> PasswordResetTokens { get; set; } = new List<PasswordResetToken>();
+
     }
 }

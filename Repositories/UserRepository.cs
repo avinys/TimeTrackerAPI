@@ -39,6 +39,14 @@ namespace TimeTrackerAPI.Repositories
         public Task AddProviderLinkAsync(UserIdentityProvider link) =>
             _context.UserIdentityProviders.AddAsync(link).AsTask();
 
+        public void Update(User user)
+        {
+            // If user is detached (common because many reads use AsNoTracking),
+            // attach and mark as modified.
+            _context.Attach(user);
+            _context.Entry(user).State = EntityState.Modified;
+        }
+
         public Task SaveAsync() => _context.SaveChangesAsync();
     }
 }

@@ -13,6 +13,7 @@ namespace TimeTrackerAPI.Data
         public DbSet<User> Users { get; set; }
         public DbSet<ProjectTime> ProjectTimes { get; set; }
         public DbSet<UserIdentityProvider> UserIdentityProviders { get; set; }
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,6 +48,13 @@ namespace TimeTrackerAPI.Data
 
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Username).IsUnique();
+
+            modelBuilder.Entity<PasswordResetToken>()
+                .HasIndex(t => new { t.UserId, t.TokenHash })
+                .IsUnique();
+
+            modelBuilder.Entity<PasswordResetToken>()
+                .HasIndex(t => t.ExpiresAtUtc);
         }
     }
 }
