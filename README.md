@@ -2,6 +2,7 @@
 
 Backend API for the TimeTracker application.
 Provides authentication, project tracking, time logging, mail SMTP support.
+UI part here: https://github.com/avinys/TimeTrackerUI
 
 ## Technologies
 - .NET 8 (ASP.NET Core Web API)
