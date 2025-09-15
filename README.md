@@ -26,9 +26,10 @@ Provides authentication, project tracking, time logging, mail SMTP support.
 - Entity Framework Core
 
 ### 1. Clone repo
-`git clone https://github.com/avinys/TimeTrackerAPI.git`
-
-`cd TimeTrackerAPI`
+```bash
+git clone https://github.com/avinys/TimeTrackerAPI.git`
+cd TimeTrackerAPI
+```
 
 ### 2. Configure secrets
 
@@ -55,7 +56,11 @@ Provides authentication, project tracking, time logging, mail SMTP support.
 "Email:Smtp:FromName": "TimeTracker"
 
 ### 3. Run migrations
-`dotnet ef database update`
+```bash
+dotnet ef database update
+```
 
 ### 4. Run the API
-`dotnet run`
+```bash
+dotnet run
+```
