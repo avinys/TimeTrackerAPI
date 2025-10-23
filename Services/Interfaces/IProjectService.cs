@@ -9,7 +9,7 @@ namespace TimeTrackerAPI.Services.Interfaces
         Task<ProjectDto?> GetByIdAsync(int id);
         Task<IEnumerable<ProjectDto>> GetByUserIdAsync(int userId);
         Task<ProjectDto> CreateAsync(string name, int userId);
-        Task<ProjectDto> UpdateAsync(int projectId, string name);
+        Task<ProjectDto> UpdateAsync(int projectId, UpdateProjectDto dto);
         Task DeleteAsync(int id);
     }
 }

@@ -55,6 +55,10 @@ namespace TimeTrackerAPI.Data
 
             modelBuilder.Entity<PasswordResetToken>()
                 .HasIndex(t => t.ExpiresAtUtc);
-        }
+
+            modelBuilder.Entity<Project>()
+                .Property(p => p.IsCompleted)
+                .HasDefaultValue(false);
+            }   
     }
 }

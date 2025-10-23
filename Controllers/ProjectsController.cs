@@ -61,8 +61,7 @@ namespace TimeTrackerAPI.Controllers
         [HttpPut("{projectId:int}")]
         public async Task<IActionResult> UpdateProject(int projectId, UpdateProjectDto dto)
         {
-            var name = dto.Name;
-            var project = await _service.UpdateAsync(projectId, name);
+            var project = await _service.UpdateAsync(projectId, dto);
             return Ok(project);
         }
 

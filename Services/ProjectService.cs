@@ -40,7 +40,8 @@ namespace TimeTrackerAPI.Services
                     IsRunning = _repoTimes.Query().Any(t =>
                                    t.ProjectId == p.Id &&
                                    t.UserId == p.UserId &&
-                                   t.EndTime == null)
+                                   t.EndTime == null),
+                    IsCompleted = p.IsCompleted
                 })
                 .AsNoTracking()
                 .ToListAsync();
@@ -59,7 +60,8 @@ namespace TimeTrackerAPI.Services
                     IsRunning = _repoTimes.Query().Any(t =>
                                      t.UserId == p.UserId &&
                                      t.ProjectId == p.Id &&
-                                     t.EndTime == null)
+                                     t.EndTime == null),
+                    IsCompleted = p.IsCompleted
                 })
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
@@ -83,7 +85,8 @@ namespace TimeTrackerAPI.Services
                     IsRunning = _repoTimes.Query().Any(t =>
                                    t.ProjectId == p.Id &&
                                    t.UserId == userId &&
-                                   t.EndTime == null)
+                                   t.EndTime == null),
+                    IsCompleted = p.IsCompleted
                 })
                 .AsNoTracking()
                 .ToListAsync();
@@ -112,17 +115,21 @@ namespace TimeTrackerAPI.Services
                 Name = proj.Name,
                 Correction = proj.Correction,
                 CreatedAt = new DateTimeOffset(proj.CreatedAt, TimeSpan.Zero),
-                IsRunning = false
+                IsRunning = false,
+                IsCompleted = false
             };
         }
 
-        public async Task<ProjectDto> UpdateAsync(int projectId, string name)
+        public async Task<ProjectDto> UpdateAsync(int projectId, UpdateProjectDto dto)
         {
             var project = await Scoped()
                 .FirstOrDefaultAsync(p => p.Id == projectId)
                 ?? throw new NotFoundException("Project not found");
 
-            project.Name = name;
+            if (dto.Name != null)
+                project.Name = dto.Name;
+            if (dto.IsCompleted.HasValue)
+                project.IsCompleted = dto.IsCompleted.Value;
             await _repo.SaveAsync();
 
             // Compute IsRunning with a cheap EXISTS that uses the (UserId, ProjectId, EndTime) index
