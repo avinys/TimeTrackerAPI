@@ -8,5 +8,6 @@
         public string Name { get; set; }
         public int Correction { get; set; }
         public bool IsRunning {  get; set; }
+        public bool IsCompleted { get; set; }
     }
 }
