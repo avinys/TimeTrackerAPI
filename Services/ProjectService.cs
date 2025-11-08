@@ -129,7 +129,20 @@ namespace TimeTrackerAPI.Services
             if (dto.Name != null)
                 project.Name = dto.Name;
             if (dto.IsCompleted.HasValue)
+            {
                 project.IsCompleted = dto.IsCompleted.Value;
+                if(project.IsCompleted)
+                {
+                    // Stop any running timers for this project
+                    var runningTimes = await _repoTimes.Query()
+                        .Where(t => t.ProjectId == project.Id && t.UserId == project.UserId && t.EndTime == null)
+                        .ToListAsync();
+                    foreach (var time in runningTimes)
+                    {
+                        time.EndTime = DateTime.UtcNow;
+                    }
+                }
+            }
             await _repo.SaveAsync();
 
             // Compute IsRunning with a cheap EXISTS that uses the (UserId, ProjectId, EndTime) index
